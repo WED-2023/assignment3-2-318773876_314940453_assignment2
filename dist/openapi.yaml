@@ -1,230 +1,465 @@
 openapi: 3.0.0
 info:
-  title: Recipes api
-  description: API for recipes project
-  version: 1.0.1
+  title: Recipe Management API
+  description: "REST API for recipe search, user registration, and personal/family recipe management.\t"
+  version: 1.0.0
 servers:
-  # local:
-  - url: "http://127.0.0.1:80"
-    # remote:
-    # - url: "http://132.72.65.211"
-    description: SwaggerHub API Auto Mocking hey
-tags:
-  - name: Auth
-    description: All authentication related routes
-  - name: Users
-    description: All the user's personal app info
-  - name: Recipes
-    description: All reciepes general info
+- url: http://localhost:3000
 paths:
-  /register:
-    post:
+  /recipes:
+    get:
       tags:
-        - Auth
-      summary: A new user from the client is added to the server
-      description: A JSON object contains all the details about the new user.
-      requestBody:
-        description: Inventory item to add
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/User"
-        required: true
+      - Recipe
+      summary: Get all recipe previews
+      description: Returns a list of all recipe previews for display on the main page
       responses:
-        "201":
-          description: A new user has been added
-        "400":
-          description: wrong input parameters
+        "200":
+          description: List of recipe previews
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+  /user/status:
+    get:
+      tags:
+      - User
+      summary: Check if user is authenticated
+      responses:
+        "200":
+          description: user status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_1'
+  /home:
+    get:
+      tags:
+      - Navigation
+      summary: Get main recipes page
+      description: Returns the main recipe overview page
+      responses:
+        "200":
+          description: Main recipe page
+  /search:
+    get:
+      tags:
+      - Navigation
+      summary: Search recipe
+      description: Returns search results for recipes
+      parameters:
+      - name: query
+        in: query
+        required: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Search results
+  /about:
+    get:
+      tags:
+      - Navigation
+      summary: About the project
+      description: Returns information about the project and the team
+      responses:
+        "200":
+          description: About page content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_2'
   /login:
     post:
       tags:
-        - Auth
-      summary: Login an exist user
-      description: An exist user login to the system
+      - Authentication
+      summary: Login a user
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LoginScheme"
+              $ref: '#/components/schemas/LoginRequest'
         required: true
       responses:
         "200":
-          description: |
-            User was found in the DB and authenitcated successfully. The session ID is returned in a cookie named `session`.  You should include this cookie in subsequent requests
-          headers:
-            Set-Cookie:
-              style: simple
-              explode: false
-              schema:
-                type: string
-                example: session=87s97sdhgf279293f8w0e9
+          description: Login successful
         "401":
-          description: Authentication failed
-  /logout:
+          description: Invalid credentials
+  /register:
     post:
       tags:
-        - Auth
-      summary: logout a user from the system and delete his cookie
-      responses:
-        "200":
-          description: "the user has ben successfully logged out"
-  /users/favorites:
-    get:
-      tags:
-        - Users
-      summary: Return the favorite recipes that were saved by user
-      description: Get an array of recipes that were saved by a specific user
-      responses:
-        "200":
-          description: data about the user's favorites recipes returned
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/RecipePreview"
-        "401":
-          description: user is not authorized
-      security:
-        - cookieAuth: []
-    post:
-      tags:
-        - Users
-      summary: save recipe in the favorites list of a user
-      description: save recipe in the favorites list of a user
+      - Authentication
+      summary: Register a new user
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                reciepeId:
-                  type: string
-                  description: reciepe's id which the user saved
-                  example: 716429
+              $ref: '#/components/schemas/RegisterRequest'
+        required: true
       responses:
-        "200":
-          description: The Recipe successfully saved as favorite
-        "401":
-          description: user is not authorized
-      security:
-        - cookieAuth: []
-  /recipes/{recipeId}:
-    get:
+        "201":
+          description: User registered successfully
+        "400":
+          description: Validation error or duplicate user
+  /logout:
+    post:
       tags:
-        - Recipes
-      summary: Return preview details on recipe by his ID
-      description: Return preview details on recipe by his ID
-      parameters:
-        - name: recipeId
-          in: path
-          description: recipe's id
-          required: true
-          style: simple
-          explode: false
-          schema:
-            type: integer
+      - Authentication
+      summary: User logout
       responses:
         "200":
-          description: data about the recipe
+          description: User logged out
+  /recipes/new:
+    post:
+      tags:
+      - Recipe
+      summary: Create a new recipe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeDetails'
+        required: true
+      responses:
+        "201":
+          description: Recipe successfully created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RecipePreview"
+                $ref: '#/components/schemas/RecipeDetails'
+        "400":
+          description: Invalid recipe data
+        "401":
+          description: Unauthorized – user must be logged in
+  /recipes/random:
+    get:
+      tags:
+      - Recipe
+      summary: Get 3 random recipes
+      description: Returns three random recipes for the Explore section
+      responses:
+        "200":
+          description: A list of 3 random recipes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+  /user/recent:
+    get:
+      tags:
+      - User
+      summary: Get last 3 viewed recipes by user
+      description: Returns the last three recipes the user viewed
+      responses:
+        "200":
+          description: A list of last 3 viewed recipes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "401":
+          description: Unauthorized – login required
+      security:
+      - bearerAuth: []
+  /recipes/{id}/details:
+    get:
+      tags:
+      - Recipe
+      summary: Get full details of a recipe
+      description: Returns all available information for a selected recipe
+      parameters:
+      - name: id
+        in: path
+        description: ID of the recipe to retrieve
+        required: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: Full recipe details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeDetails'
+  /recipes/search:
+    get:
+      tags:
+      - Recipe
+      summary: Search for recipes by name and filters
+      parameters:
+      - name: query
+        in: query
+        description: Search term for recipe name or dish
+        required: true
+        schema:
+          type: string
+      - name: cuisine
+        in: query
+        description: Filter by cuisine types
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+      - name: diet
+        in: query
+        description: Filter by diet type
+        required: false
+        schema:
+          type: string
+      - name: intolerances
+        in: query
+        description: Filter by intolerances
+        required: false
+        style: form
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+      - name: sortBy
+        in: query
+        description: Sort by preparation time or popularity
+        required: false
+        schema:
+          type: string
+          enum:
+          - time
+          - popularity
+      responses:
+        "200":
+          description: List of recipes matching search query and filters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
         "404":
-          description: recipeId is not exists
+          description: No recipes found matching the search
+  /user/recipes:
+    get:
+      tags:
+      - Recipe
+      summary: Get recipes created by the current logged-in user
+      responses:
+        "200":
+          description: List of recipes created by the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "401":
+          description: Unauthorized – login required
+      security:
+      - bearerAuth: []
+  /user/recipes/favorites:
+    get:
+      tags:
+      - Recipe
+      summary: Get recipes marked as favorite by the current user
+      responses:
+        "200":
+          description: List of recipes favorited by the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "401":
+          description: Unauthorized – login required
+      security:
+      - bearerAuth: []
+  /user/recipes/family:
+    get:
+      tags:
+      - Recipe
+      summary: Get 3 family recipes connected to the current user
+      description: Returns at least 3 family recipes based on connections with family members.
+      responses:
+        "200":
+          description: List of family recipes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_3'
+        "401":
+          description: Unauthorized – requires login
+      security:
+      - bearerAuth: []
 components:
   schemas:
-    User:
+    RecipePreview:
+      type: object
+      properties:
+        image:
+          type: string
+          format: uri
+          example: https://example.com/images/recipe1.jpg
+        title:
+          type: string
+          example: פיצה מרגריטה
+        prep_time_minutes:
+          type: integer
+          example: 30
+        popularity_score:
+          type: integer
+          example: 200
+        tags:
+          type: string
+          example: צמחוני
+          enum:
+          - צמחוני
+          - טבעוני
+        has_gluten:
+          type: boolean
+          example: true
+        was_viewed:
+          type: boolean
+          example: true
+        is_favorite:
+          type: boolean
+          example: false
+        can_preview:
+          type: boolean
+          example: true
+    RegisterRequest:
+      required:
+      - country
+      - email
+      - first_name
+      - last_name
+      - password
+      - password_confirm
+      - username
       type: object
       properties:
         username:
           maxLength: 8
           minLength: 3
           type: string
-          description: username conatins between 3 to 8 letters only
-          example: my_name
-        firstname:
+          example: user1
+        first_name:
           type: string
-          description: user's first name
-          example: my_first_name
-        lastname:
+          example: noa
+        last_name:
           type: string
-          description: user's last name
-          example: my_last_name
+          example: revivo
         country:
           type: string
-          description: user's country
           example: Israel
         password:
           maxLength: 10
           minLength: 5
+          pattern: "^(?=.*[0-9])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};:\"\\\\|,.<>\\/?]).+$"
           type: string
-          description:
-            password conatins between 5 to 10 chars, at least one of them
-            is a number and a special char
-          format: password
-          example: my_name@12
+          example: MyPass1!
+        password_confirm:
+          type: string
+          example: MyPass1!
         email:
-          pattern: email
           type: string
-          description: user's email
-          example: my_name12@gmail.com
-        # image-url:
-        #   pattern: URL
-        #   type: string
-        #   description: URL for the user's image
-        #   example: https://cloudinary.com/
-      description: Model containing user info
-    LoginScheme:
+          format: email
+          example: noa@gmail.com
+    LoginRequest:
+      required:
+      - password
+      - username
       type: object
       properties:
         username:
-          maxLength: 8
-          minLength: 3
           type: string
-          description: username conatins letters only
         password:
-          maxLength: 10
-          minLength: 5
-          description: password conatins at least one number and one special char
-          format: password
-      example:
-        username: my_name
-        password: my_name@12
-    RecipePreview:
+          type: string
+    RecipeDetails:
+      allOf:
+      - $ref: '#/components/schemas/RecipePreview'
+      - type: object
+        properties:
+          ingredients:
+            type: array
+            items:
+              $ref: '#/components/schemas/RecipeDetails_ingredients'
+          instructions:
+            type: string
+            example: לערבב את כל המרכיבים ולאפות ב-180 מעלות למשך 40 דקות.
+          servings:
+            type: integer
+            example: 4
+    FamilyRecipe:
       type: object
       properties:
-        id:
-          type: integer
-          description: recipe identifier
-          example: 102
         title:
           type: string
-          description: recipe name
-          example: Simple Macaroni and Cheese
-        image:
+          example: עוגת שוקולד
+        contributor_name:
           type: string
-          description: recipe image
-          format: URL
-          example: https://spoonacular.com/recipeimages/655455-566x370.jpg
-        readyInMinutes:
-          type: integer
-          description: the time takes to make this recipe
-          example: 45
-        popularity:
-          type: integer
-          description: how many likes got this recipe
-          example: 5987
-        vegetarian:
+          description: שם בן המשפחה שכתב את המתכון
+          example: סבתא אסתר
+        occasion:
+          type: string
+          description: מתי נוהגים להכין את המתכון
+          example: ימי הולדת
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyRecipe_ingredients'
+        instructions:
+          type: string
+          example: לערבב היטב את כל הרכיבים ולשפוך לתבנית אפייה
+        photo_url:
+          type: string
+          description: תמונה של המנה או של בן המשפחה עם המנה
+          format: uri
+          example: https://example.com/images/grandma-cake.jpg
+    inline_response_200:
+      type: object
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipePreview'
+    inline_response_200_1:
+      type: object
+      properties:
+        is_authenticated:
           type: boolean
-          description: indication if the recipe is vegetarian
-          example: false
-        vegan:
-          type: boolean
-          description: indication if the recipe is vegan
-          example: false
-        glutenFree:
-          type: boolean
-          description: indication if the recipe is gluten free
-          example: false
+          example: true
+        username:
+          type: string
+          example: noa
+    inline_response_200_2:
+      type: object
+      properties:
+        content:
+          type: string
+          example: This project was developed as part of the web development course. It includes features like recipe management.
+    inline_response_200_3:
+      type: object
+      properties:
+        recipes:
+          minItems: 3
+          type: array
+          items:
+            $ref: '#/components/schemas/FamilyRecipe'
+    RecipeDetails_ingredients:
+      type: object
+      properties:
+        name:
+          type: string
+          example: קמח
+        amount:
+          type: string
+          example: שתי כוסות
+    FamilyRecipe_ingredients:
+      type: object
+      properties:
+        name:
+          type: string
+          example: קקאו
+        amount:
+          type: string
+          example: 2 כפות
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
