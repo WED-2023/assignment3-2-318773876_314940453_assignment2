@@ -40,7 +40,15 @@ app.get("/",function(req,res)
 
 });
 
-//app.use(cors());
+const corsOptions = {
+  origin: "http://localhost:3000", // או http://127.0.0.1:3000 תלוי מאיפה מגיע Swagger
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  credentials: true, // חשוב במיוחד אם את משתמשת ב־cookies
+};
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
+// app.use(cors());
 // app.options("*", cors());
 
 // const corsConfig = {
