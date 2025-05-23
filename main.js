@@ -40,7 +40,7 @@ app.get("/",function(req,res)
 
 });
 
-// app.use(cors());
+//app.use(cors());
 // app.options("*", cors());
 
 // const corsConfig = {
@@ -106,6 +106,3 @@ process.on("SIGINT", function () {
   }
   process.exit();
 });
-
-const cors = require("cors");
-app.use(cors());
