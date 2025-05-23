@@ -106,3 +106,6 @@ process.on("SIGINT", function () {
   }
   process.exit();
 });
+
+const cors = require("cors");
+app.use(cors());

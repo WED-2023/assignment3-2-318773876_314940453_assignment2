@@ -11,13 +11,17 @@ router.post("/register", async (req, res, next) => {
     // username exists
     let user_details = {
       username: req.body.username,
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
+      firstname: req.body.first_name,
+      lastname: req.body.last_name,
       country: req.body.country,
       password: req.body.password,
       password_confirm: req.body.password_confirm,
       email: req.body.email,
     }
+
+    if (user_details.password !== user_details.password_confirm)
+      throw { status: 400, message: "Passwords do not match" };
+
     let users = [];
     users = await DButils.execQuery("SELECT username from users");
 
@@ -31,8 +35,9 @@ router.post("/register", async (req, res, next) => {
     );
 
     await DButils.execQuery(
-      `INSERT INTO users (username, firstname, lastname, country, password, email, profilePic) VALUES ('${user_details.username}', '${user_details.firstname}', '${user_details.lastname}',
-      '${user_details.country}', '${hash_password}', '${user_details.email}', '${user_details.profilePic}')`
+      `INSERT INTO users (username, firstname, lastname, country, password, email) 
+      VALUES ('${user_details.username}', '${user_details.firstname}', '${user_details.lastname}',
+      '${user_details.country}', '${hash_password}', '${user_details.email}')`
     );
     res.status(201).send({ message: "user created", success: true });
   } catch (error) {
