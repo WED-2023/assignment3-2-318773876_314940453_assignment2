@@ -323,13 +323,13 @@ components:
           example: true
     RegisterRequest:
       required:
-      - country
-      - email
+      - username
       - first_name
       - last_name
+      - country
       - password
       - password_confirm
-      - username
+      - email
       type: object
       properties:
         username:

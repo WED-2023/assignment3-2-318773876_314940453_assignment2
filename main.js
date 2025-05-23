@@ -6,6 +6,7 @@ var logger = require("morgan");
 const session = require("client-sessions");
 const DButils = require("./routes/utils/DButils");
 var cors = require('cors')
+const navigation = require("./routes/navigation");
 
 var app = express();
 app.use(logger("dev")); //logger
@@ -50,7 +51,7 @@ app.get("/",function(req,res)
 // app.use(cors(corsConfig));
 // app.options("*", cors(corsConfig));
 
-var port = process.env.PORT || "80"; //local=3000 remote=80
+var port = process.env.PORT || "3000"; //local=3000 remote=80
 //#endregion
 const user = require("./routes/user");
 const recipes = require("./routes/recipes");
@@ -81,7 +82,7 @@ app.get("/alive", (req, res) => res.send("I'm alive"));
 app.use("/users", user);
 app.use("/recipes", recipes);
 app.use("/", auth);
-
+app.use("/", navigation);
 
 
 

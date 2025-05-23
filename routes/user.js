@@ -53,6 +53,41 @@ router.get('/favorites', async (req,res,next) => {
 });
 
 
+/**
+ * This path returns the current logged-in user status
+ */
+router.get("/status", async (req, res) => {
+  if (req.session && req.session.user_id) {
+    try {
+      const user = (
+        await DButils.execQuery(
+          `SELECT username FROM users WHERE user_id = '${req.session.user_id}'`
+        )
+      )[0];
+      res.status(200).send({ is_authenticated: true, username: user.username });
+    } catch (err) {
+      res.status(500).send({ is_authenticated: false, message: "Server error" });
+    }
+  } else {
+    res.status(200).send({ is_authenticated: false });
+  }
+});
+
+
+router.get("/recent", async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+    const recent = await user_utils.getLastViewedRecipes(user_id);
+
+    // נניח שיש לך פונקציה שממירה ID ל־preview
+    const recipeIds = recent.map(r => r.recipe_id);
+    const recipes = await recipe_utils.getRecipesPreview(recipeIds);
+
+    res.status(200).send({ recipes });
+  } catch (err) {
+    next(err);
+  }
+});
 
 
 module.exports = router;
