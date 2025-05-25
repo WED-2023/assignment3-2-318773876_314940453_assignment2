@@ -15,7 +15,6 @@ router.get("/", async (req, res, next) => {
 });
 
 
-
 /**
  * This path returns a full details of a recipe by its id
  */
@@ -64,8 +63,8 @@ router.post("/new", async (req, res, next) => {
     }
 
     const {
-      title,
       image,
+      title,
       prep_time_minutes,
       popularity_score,
       tags,
@@ -80,14 +79,14 @@ router.post("/new", async (req, res, next) => {
       return res.status(400).send({ message: "Missing required fields" });
     }
 
-    // שמירה לטבלת recipes (לדוגמה, צריכה להתאים למסד שלך)
+    // שמירה לטבלת recipes
     await DButils.execQuery(`
       INSERT INTO recipes (
         user_id, title, image, prep_time_minutes, popularity_score,
         tags, has_gluten, ingredients, instructions, servings
       )
       VALUES (
-        '${user_id}', '${title}', '${image}', '${prep_time_minutes}', '${popularity_score}',
+        '${user_id}', '${image}', '${title}', '${prep_time_minutes}', '${popularity_score}',
         '${tags}', '${has_gluten}', '${JSON.stringify(ingredients)}', '${instructions}', '${servings}'
       )
     `);

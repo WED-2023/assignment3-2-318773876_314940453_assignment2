@@ -2,6 +2,7 @@ const axios = require("axios");
 const api_domain = "https://api.spoonacular.com/recipes";
 const api_key = process.env.spoonacular_apiKey;
 const DButils = require("./DButils");
+const e = require("express");
 
 
 /**
@@ -19,21 +20,94 @@ async function getRecipeInformation(recipe_id) {
     });
 }
 
-async function getRecipeDetails(recipe_id) {
-    let recipe_info = await getRecipeInformation(recipe_id);
-    let { id, title, readyInMinutes, image, aggregateLikes, vegan, vegetarian, glutenFree } = recipe_info.data;
+// תצוגה מקדימה - מיפוי מתוך מידע מלא
+function extractPreview(recipe_info) {
+  const {
+    id,
+    title,
+    readyInMinutes,
+    image,
+    aggregateLikes,
+    vegan,
+    vegetarian,
+    glutenFree
+  } = recipe_info;
 
-    return {
-        id: id,
-        title: title,
-        readyInMinutes: readyInMinutes,
-        image: image,
-        popularity: aggregateLikes,
-        vegan: vegan,
-        vegetarian: vegetarian,
-        glutenFree: glutenFree,
-        
+  let tags = null;
+  if (vegan) tags = "טבעוני";
+  else if (vegetarian) tags = "צמחוני";
+
+  return {
+    id,
+    title,
+    prep_time_minutes: readyInMinutes,
+    image,
+    popularity_score: aggregateLikes,
+    tags,
+    has_gluten: !glutenFree,
+    was_viewed: false,
+    is_favorite: false,
+    can_preview: true
+  };
+}
+exports.extractPreview = extractPreview;
+
+
+// שליפת מספר מתכונים אקראיים לתצוגה מקדימה
+async function getRandomRecipesPreview(number) {
+  const response = await axios.get(`${api_domain}/random`, {
+    params: {
+      number,
+      apiKey: api_key
     }
+  });
+
+  const recipes = response.data.recipes;
+  return recipes.map(extractPreview);
+}
+exports.getRandomRecipesPreview = getRandomRecipesPreview;
+
+// שליפה מלאה של מתכון לפי מזהה
+async function getRecipeDetails(recipe_id) {
+  let recipe_info = await getRecipeInformation(recipe_id);
+  recipe_info = recipe_info.data;
+
+  const {
+    id,
+    title,
+    readyInMinutes,
+    image,
+    aggregateLikes,
+    vegan,
+    vegetarian,
+    glutenFree,
+    extendedIngredients,
+    instructions,
+    servings
+  } = recipe_info;
+
+  let tags = null;
+  if (vegan) tags = "טבעוני";
+  else if (vegetarian) tags = "צמחוני";
+
+  return {
+    id,
+    title,
+    prep_time_minutes: readyInMinutes,
+    image,
+    popularity_score: aggregateLikes,
+    tags,
+    has_gluten: !glutenFree,
+    ingredients: extendedIngredients.map(ing => ({
+      name: ing.name,
+      amount: ing.original
+    })),
+    instructions,
+    servings,
+    was_viewed: false,
+    is_favorite: false,
+    can_preview: true
+  };
 }
 
 exports.getRecipeDetails = getRecipeDetails;
