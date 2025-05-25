@@ -57,17 +57,40 @@ exports.extractPreview = extractPreview;
 //פונקציית עזר לפונקציה favorites שנמצאת בuser.js
 async function getRecipesPreview(recipes_ids) {
   try {
-    const promises = recipes_ids.map(async (id) => {
-      const response = await axios.get(`${api_domain}/${id}/information`, {
-        params: {
-          includeNutrition: false,
-          apiKey: api_key
+    const previews = await Promise.all(
+      recipes_ids.map(async (recipe_id) => {
+        if (recipe_id < 100) {
+          // פנימי
+          const result = await DButils.execQuery(`SELECT * FROM recipes WHERE recipe_id = ${recipe_id}`);
+          if (!result || result.length === 0) {
+            throw new Error("Recipe not found in internal DB");
+          }
+          const recipe = result[0];
+          return {
+            id: recipe.id,
+            title: recipe.title,
+            prep_time_minutes: recipe.prep_time_minutes,
+            image: recipe.image,
+            popularity_score: recipe.popularity_score,
+            tags: recipe.tags,
+            has_gluten: recipe.has_gluten === 1,
+            was_viewed: recipe.was_viewed === 1,
+            is_favorite: recipe.is_favorite === 1,
+            can_preview: recipe.can_preview === 1,
+          };
+        } else {
+          // חיצוני
+          const response = await axios.get(`${api_domain}/${recipe_id}/information`, {
+            params: {
+              includeNutrition: false,
+              apiKey: api_key,
+            },
+          });
+          return extractPreview(response.data);
         }
-      });
-      return extractPreview(response.data);
-    });
+      })
+    );
 
-    const previews = await Promise.all(promises);
     return previews;
   } catch (error) {
     throw new Error("Failed to get recipe previews: " + error.message);
