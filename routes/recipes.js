@@ -50,62 +50,24 @@ router.get("/search", async (req, res, next) => {
 });
 
 
-// שורה 111 - יצירת מתכון חדש
+//יצירת מתכון חדש
 const DButils = require("./utils/DButils");
+const recipes_utils = require("./utils/recipes_utils");
 
 router.post("/new", async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
 
-    // אם המשתמש לא מחובר – שלחי 401
     if (!user_id) {
       return res.status(401).send({ message: "Unauthorized – please login first" });
     }
 
-    const {
-      image,
-      title,
-      prep_time_minutes,
-      popularity_score,
-      tags,
-      has_gluten,
-      ingredients,
-      instructions,
-      servings
-    } = req.body;
-
-    // בדיקה בסיסית שכל השדות קיימים
-    if (!title || !ingredients || !instructions) {
-      return res.status(400).send({ message: "Missing required fields" });
-    }
-
-    // שמירה לטבלת recipes
-    await DButils.execQuery(`
-      INSERT INTO recipes (
-        user_id, title, image, prep_time_minutes, popularity_score,
-        tags, has_gluten, ingredients, instructions, servings
-      )
-      VALUES (
-        '${user_id}', '${image}', '${title}', '${prep_time_minutes}', '${popularity_score}',
-        '${tags}', '${has_gluten}', '${JSON.stringify(ingredients)}', '${instructions}', '${servings}'
-      )
-    `);
+    const recipe = await recipes_utils.createNewRecipe(user_id, req.body);
 
     res.status(201).send({
       message: "Recipe successfully created",
-      recipe: {
-        title,
-        image,
-        prep_time_minutes,
-        popularity_score,
-        tags,
-        has_gluten,
-        ingredients,
-        instructions,
-        servings
-      }
+      recipe
     });
-
   } catch (error) {
     next(error);
   }

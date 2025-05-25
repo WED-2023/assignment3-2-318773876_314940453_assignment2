@@ -160,14 +160,14 @@ paths:
           description: Unauthorized – login required
       security:
       - bearerAuth: []
-  /recipes/{id}/details:
+  /recipes/{recipeId}:
     get:
       tags:
       - Recipe
       summary: Get full details of a recipe
       description: Returns all available information for a selected recipe
       parameters:
-      - name: id
+      - name: recipeId
         in: path
         description: ID of the recipe to retrieve
         required: true

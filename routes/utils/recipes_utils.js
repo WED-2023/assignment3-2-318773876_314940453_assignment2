@@ -3,7 +3,7 @@ const api_domain = "https://api.spoonacular.com/recipes";
 const api_key = process.env.spoonacular_apiKey;
 const DButils = require("./DButils");
 const e = require("express");
-
+require("dotenv").config();
 
 /**
  * Get recipes list from spooncular response and extract the relevant recipe data for preview
@@ -15,42 +15,42 @@ async function getRecipeInformation(recipe_id) {
     return await axios.get(`${api_domain}/${recipe_id}/information`, {
         params: {
             includeNutrition: false,
-            apiKey: process.env.spooncular_apiKey
+            apiKey: api_key
         }
     });
 }
 
-// תצוגה מקדימה - מיפוי מתוך מידע מלא
-function extractPreview(recipe_info) {
-  const {
-    id,
-    title,
-    readyInMinutes,
-    image,
-    aggregateLikes,
-    vegan,
-    vegetarian,
-    glutenFree
-  } = recipe_info;
+// // תצוגה מקדימה - מיפוי מתוך מידע מלא
+// function extractPreview(recipe_info) {
+//   const {
+//     id,
+//     title,
+//     readyInMinutes,
+//     image,
+//     aggregateLikes,
+//     vegan,
+//     vegetarian,
+//     glutenFree
+//   } = recipe_info;
 
-  let tags = null;
-  if (vegan) tags = "טבעוני";
-  else if (vegetarian) tags = "צמחוני";
+//   let tags = null;
+//   if (vegan) tags = "טבעוני";
+//   else if (vegetarian) tags = "צמחוני";
 
-  return {
-    id,
-    title,
-    prep_time_minutes: readyInMinutes,
-    image,
-    popularity_score: aggregateLikes,
-    tags,
-    has_gluten: !glutenFree,
-    was_viewed: false,
-    is_favorite: false,
-    can_preview: true
-  };
-}
-exports.extractPreview = extractPreview;
+//   return {
+//     id,
+//     title,
+//     prep_time_minutes: readyInMinutes,
+//     image,
+//     popularity_score: aggregateLikes,
+//     tags,
+//     has_gluten: !glutenFree,
+//     was_viewed: false,
+//     is_favorite: false,
+//     can_preview: true
+//   };
+// }
+// exports.extractPreview = extractPreview;
 
 
 // שליפת מספר מתכונים אקראיים לתצוגה מקדימה
@@ -164,7 +164,6 @@ async function getRandomRecipesPreview(number = 3) {
     };
   });
 }
-
 exports.getRandomRecipesPreview = getRandomRecipesPreview;
 
 //שורה 146 - מתכונים שנצפו
@@ -173,5 +172,52 @@ async function markRecipeAsViewed(user_id, recipe_id) {
     `INSERT INTO viewed_recipes (user_id, recipe_id) VALUES ('${user_id}', '${recipe_id}')`
   );
 }
-
 exports.markRecipeAsViewed = markRecipeAsViewed;
+
+
+//יצירת מתכון חדש
+async function createNewRecipe(user_id, recipeData) {
+  const {
+    image,
+    title,
+    prep_time_minutes,
+    popularity_score,
+    tags,
+    has_gluten,
+    ingredients,
+    instructions,
+    servings
+  } = recipeData;
+
+  // בדיקה בסיסית
+  if (!title || !ingredients || !instructions) {
+    const error = new Error("Missing required fields");
+    error.status = 400;
+    throw error;
+  }
+
+  // הכנסת נתונים למסד
+  await DButils.execQuery(`
+    INSERT INTO recipes (
+      user_id, title, image, prep_time_minutes, popularity_score,
+      tags, has_gluten, ingredients, instructions, servings
+    ) VALUES (
+      '${user_id}', '${image}', '${title}', '${prep_time_minutes}', '${popularity_score}',
+      '${tags}', '${has_gluten}', '${JSON.stringify(ingredients)}', '${instructions}', '${servings}'
+    )
+  `);
+
+  return {
+    title,
+    image,
+    prep_time_minutes,
+    popularity_score,
+    tags,
+    has_gluten,
+    ingredients,
+    instructions,
+    servings
+  };
+}
+
+exports.createNewRecipe = createNewRecipe;
