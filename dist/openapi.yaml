@@ -261,6 +261,34 @@ paths:
           description: Unauthorized – login required
       security:
       - bearerAuth: []
+    post:
+      tags:
+        - User
+      summary: Save a recipe to the favorites list of the logged-in user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - recipeId
+              properties:
+                recipeId:
+                  type: integer
+                  example: 123456
+      responses:
+        "200":
+          description: Recipe successfully saved as favorite
+          content:
+            application/json:
+              schema:
+                type: string
+                example: The Recipe successfully saved as favorite
+        "401":
+          description: Unauthorized – login required
+      security:
+        - bearerAuth: []
   /user/family:
     get:
       tags:
