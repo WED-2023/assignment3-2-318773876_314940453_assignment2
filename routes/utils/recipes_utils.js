@@ -11,6 +11,7 @@ require("dotenv").config();
  */
 
 
+// שליפת מידע מלא על מתכון לפי מזהה
 async function getRecipeInformation(recipe_id) {
     return await axios.get(`${api_domain}/${recipe_id}/information`, {
         params: {
@@ -174,7 +175,7 @@ async function createNewRecipe(user_id, recipeData) {
     image,
     title,
     prep_time_minutes,
-    popularity_score,
+    
     tags,
     has_gluten,
     ingredients,
@@ -198,7 +199,7 @@ async function createNewRecipe(user_id, recipeData) {
       user_id, image, title, prep_time_minutes, popularity_score,
       tags, has_gluten, was_viewed, is_favorite, can_preview, ingredients, instructions, servings
     ) VALUES (
-      '${user_id}', '${image}', '${title}', '${prep_time_minutes}', '${popularity_score}',
+      '${user_id}', '${image}', '${title}', '${prep_time_minutes}', 0,
       '${tags}', '${hasGlutenValue}',  '${wasViewedValue}', '${isFavoriteValue}', '${canPreviewValue}','${JSON.stringify(ingredients)}', '${instructions}', '${servings}'
     )
   `);
