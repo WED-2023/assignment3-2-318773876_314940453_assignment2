@@ -90,4 +90,22 @@ router.get("/recent", async (req, res, next) => {
 });
 
 
+// החזרת מתכונים של משתמש מחובר
+router.get("/recipes", async (req, res, next) => {
+  try {
+    const user_id = req.session?.user_id;
+
+    if (!user_id) {
+      return res.status(401).send({ message: "Unauthorized – login required" });
+    }
+
+    const userRecipes = await user_utils.getUserRecipes(user_id);
+
+    res.status(200).send({ recipes: userRecipes });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
 module.exports = router;

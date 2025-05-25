@@ -22,3 +22,27 @@ async function getLastViewedRecipes(user_id) {
   return result;
 }
 exports.getLastViewedRecipes = getLastViewedRecipes;
+
+
+// החזרת מתכונים של משתמש מסוים (המשתמש שמחובר)
+async function getUserRecipes(user_id) {
+  const recipes = await DButils.execQuery(
+    `SELECT * FROM recipes WHERE user_id = '${user_id}'`
+  );
+
+  // אם רוצים להחזיר בפורמט של Preview כמו בשאר המערכת:
+  return recipes.map((recipe) => {
+    return {
+      title: recipe.title,
+      image: recipe.image,
+      prep_time_minutes: recipe.prep_time_minutes,
+      popularity_score: recipe.popularity_score,
+      tags: recipe.tags,
+      has_gluten: recipe.has_gluten === 1,
+      was_viewed: recipe.was_viewed === 1,
+      is_favorite: recipe.is_favorite === 1,
+      can_preview: recipe.can_preview === 1,
+    };
+  });
+}
+exports.getUserRecipes = getUserRecipes;

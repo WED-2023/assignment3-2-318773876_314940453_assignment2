@@ -14,35 +14,39 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-
-/**
- * This path returns a full details of a recipe by its id
- */
-router.get("/:recipeId", async (req, res, next) => {
+//החזרת 3 מתכונים רנדומליים
+router.get("/3random", async (req, res, next) => {
   try {
-    const recipe = await recipes_utils.getRecipeDetails(req.params.recipeId);
-    
-    // הוספת צפייה למשתמש המחובר, אם יש
-    if (req.session && req.session.user_id) {
-      await recipes_utils.markRecipeAsViewed(req.session.user_id, req.params.recipeId);
-    }
-    
-    res.send(recipe);
+    const randomRecipes = await recipes_utils.get3RandomRecipesPreview(3);
+    res.status(200).send({ recipes: randomRecipes });
   } catch (error) {
     next(error);
   }
 });
 
-//search line 43 (recipes)
+
+//search (recipes)
 router.get("/search", async (req, res, next) => {
   try {
-    const query = req.query.query;
+    const { query, cuisine, diet, intolerances, sortBy, number} = req.query;
 
     if (!query || query.trim() === "") {
-      return res.status(200).send({ recipes: [] });
+      return res.status(400).send({ message: "Missing required search query" });
     }
 
-    const recipes = await recipes_utils.searchRecipesByQuery(query);
+    const recipes = await recipes_utils.searchRecipesAdvanced({
+      query,
+      cuisine: Array.isArray(cuisine) ? cuisine : cuisine ? [cuisine] : [],
+      diet,
+      intolerances: Array.isArray(intolerances) ? intolerances : intolerances ? [intolerances] : [],
+      sortBy,
+      number: number ? parseInt(number) : 5
+    });
+
+    if (!recipes || recipes.length === 0) {
+      return res.status(404).send({ message: "No recipes found" });
+    }
+
     res.status(200).send({ recipes });
   } catch (error) {
     next(error);
@@ -52,7 +56,6 @@ router.get("/search", async (req, res, next) => {
 
 //יצירת מתכון חדש
 const DButils = require("./utils/DButils");
-const recipes_utils = require("./utils/recipes_utils");
 
 router.post("/new", async (req, res, next) => {
   try {
@@ -73,15 +76,186 @@ router.post("/new", async (req, res, next) => {
   }
 });
 
-
+//  החזרת מתכונים רנדומליים עבור החלק הראשון - ?
 router.get("/random", async (req, res, next) => {
   try {
-    const randomRecipes = await recipes_utils.getRandomRecipesPreview(3);
+    const randomRecipes = await recipes_utils.getRandomRecipesPreview(5);
     res.status(200).send({ recipes: randomRecipes });
   } catch (error) {
     next(error);
   }
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * This path returns a full details of a recipe by its id
+ */
+router.get("/:recipeId", async (req, res, next) => {
+  try {
+    const recipe = await recipes_utils.getRecipeDetails(req.params.recipeId);
+    
+    // הוספת צפייה למשתמש המחובר, אם יש
+    if (req.session && req.session.user_id) {
+      await recipes_utils.markRecipeAsViewed(req.session.user_id, req.params.recipeId);
+    }
+    
+    res.send(recipe);
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;

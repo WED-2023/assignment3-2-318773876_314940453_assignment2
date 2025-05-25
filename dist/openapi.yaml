@@ -40,21 +40,6 @@ paths:
       responses:
         "200":
           description: Main recipe page
-  /search:
-    get:
-      tags:
-      - Navigation
-      summary: Search recipe
-      description: Returns search results for recipes
-      parameters:
-      - name: query
-        in: query
-        required: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Search results
   /about:
     get:
       tags:
@@ -130,7 +115,7 @@ paths:
           description: Invalid recipe data
         "401":
           description: Unauthorized – user must be logged in
-  /recipes/random:
+  /recipes/3random:
     get:
       tags:
       - Recipe
@@ -227,6 +212,14 @@ paths:
           enum:
           - time
           - popularity
+      - name: number
+        in: query
+        description: Number of recipes to return (default 5)
+        required: false
+        schema:
+          type: integer
+          enum: [5, 10, 15]
+          default: 5
       responses:
         "200":
           description: List of recipes matching search query and filters
@@ -252,7 +245,7 @@ paths:
           description: Unauthorized – login required
       security:
       - bearerAuth: []
-  /user/recipes/favorites:
+  /user/favorites:
     get:
       tags:
       - Recipe
@@ -268,7 +261,7 @@ paths:
           description: Unauthorized – login required
       security:
       - bearerAuth: []
-  /user/recipes/family:
+  /user/family:
     get:
       tags:
       - Recipe
