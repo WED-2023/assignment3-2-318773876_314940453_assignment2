@@ -232,7 +232,7 @@ paths:
   /user/recipes:
     get:
       tags:
-      - Recipe
+      - User
       summary: Get recipes created by the current logged-in user
       responses:
         "200":
@@ -248,7 +248,7 @@ paths:
   /user/favorites:
     get:
       tags:
-      - Recipe
+      - User
       summary: Get recipes marked as favorite by the current user
       responses:
         "200":
@@ -264,7 +264,7 @@ paths:
   /user/family:
     get:
       tags:
-      - Recipe
+      - User
       summary: Get 3 family recipes connected to the current user
       description: Returns at least 3 family recipes based on connections with family members.
       responses:

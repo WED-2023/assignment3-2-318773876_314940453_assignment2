@@ -53,6 +53,27 @@ function extractPreview(recipe_info) {
 }
 exports.extractPreview = extractPreview;
 
+//פונקציית עזר לפונקציה favorites שנמצאת בuser.js
+async function getRecipesPreview(recipes_ids) {
+  try {
+    const promises = recipes_ids.map(async (id) => {
+      const response = await axios.get(`${api_domain}/${id}/information`, {
+        params: {
+          includeNutrition: false,
+          apiKey: api_key
+        }
+      });
+      return extractPreview(response.data);
+    });
+
+    const previews = await Promise.all(promises);
+    return previews;
+  } catch (error) {
+    throw new Error("Failed to get recipe previews: " + error.message);
+  }
+}
+exports.getRecipesPreview = getRecipesPreview;
+
 
 // שליפת מספר מתכונים אקראיים לתצוגה מקדימה
 async function getRandomRecipesPreview(number) {
