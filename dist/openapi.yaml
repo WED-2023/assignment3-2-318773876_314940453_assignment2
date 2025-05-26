@@ -447,6 +447,8 @@ components:
         username:
           type: string
           example: noa
+      required:
+        - is_authenticated
     inline_response_200_2:
       type: object
       properties:

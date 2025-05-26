@@ -54,11 +54,22 @@ function extractPreview(recipe_info) {
 }
 exports.extractPreview = extractPreview;
 
-//פונקציית עזר לפונקציה favorites שנמצאת בuser.js
-async function getRecipesPreview(recipes_ids) {
+//פונקציית עזר לפונקציה favorites  שנמצאת בuser.js   
+async function getRecipesPreview(recipes_ids, user_id) {
   try {
     const previews = await Promise.all(
       recipes_ids.map(async (recipe_id) => {
+        let isViewed = false;
+
+        // אם יש משתמש מחובר – נבדוק אם הוא צפה
+        if (user_id) {
+          const result = await DButils.execQuery(`
+            SELECT * FROM viewed_recipes
+            WHERE user_id = '${user_id}' AND recipe_id = '${recipe_id}'
+          `);
+          isViewed = result.length > 0;
+        }
+
         if (recipe_id < 100) {
           // פנימי
           const result = await DButils.execQuery(`SELECT * FROM recipes WHERE recipe_id = ${recipe_id}`);
@@ -67,14 +78,14 @@ async function getRecipesPreview(recipes_ids) {
           }
           const recipe = result[0];
           return {
-            id: recipe.id,
+            id: recipe.recipe_id,
             title: recipe.title,
             prep_time_minutes: recipe.prep_time_minutes,
             image: recipe.image,
             popularity_score: recipe.popularity_score,
             tags: recipe.tags,
             has_gluten: recipe.has_gluten === 1,
-            was_viewed: recipe.was_viewed === 1,
+            was_viewed: isViewed,
             is_favorite: recipe.is_favorite === 1,
             can_preview: recipe.can_preview === 1,
           };
@@ -86,7 +97,9 @@ async function getRecipesPreview(recipes_ids) {
               apiKey: api_key,
             },
           });
-          return extractPreview(response.data);
+          const preview = extractPreview(response.data);
+          preview.was_viewed = isViewed;
+          return preview;
         }
       })
     );
@@ -99,21 +112,7 @@ async function getRecipesPreview(recipes_ids) {
 exports.getRecipesPreview = getRecipesPreview;
 
 
-// שליפת מספר מתכונים אקראיים לתצוגה מקדימה
-async function getRandomRecipesPreview(number) {
-  const response = await axios.get(`${api_domain}/random`, {
-    params: {
-      number,
-      apiKey: api_key
-    }
-  });
-  const recipes = response.data.recipes;
-  return recipes.map(extractPreview);
-}
-exports.getRandomRecipesPreview = getRandomRecipesPreview;
-
-
-// שליפה מלאה של מתכון לפי מזהה
+// שליפה של כל פרטי המתכון לפי מזהה
 async function getRecipeDetails(recipe_id) {
   let recipe_info = await getRecipeInformation(recipe_id);
   recipe_info = recipe_info.data;
@@ -155,50 +154,22 @@ async function getRecipeDetails(recipe_id) {
 exports.getRecipeDetails = getRecipeDetails;
 
 
-// שורה 9 - תצוגה מקדימה של מתכונים אקראיים
-async function getRandomRecipesPreview(number = 3) {
-  const response = await axios.get(
-    `https://api.spoonacular.com/recipes/random`,
-    {
-      params: {
-        number: number,
-        apiKey: api_key
-      }
-    }
-  );
-  return response.data.recipes.map((recipe) => {
-    return {
-      image: recipe.image,
-      title: recipe.title,
-      prep_time_minutes: recipe.readyInMinutes,
-      popularity_score: recipe.aggregateLikes,
-      tags: recipe.vegetarian ? "צמחוני" : "טבעוני", 
-      has_gluten: recipe.glutenFree === false,
-      was_viewed: false,
-      is_favorite: false,
-      can_preview: true,
-    };
-  });
-}
-exports.getRandomRecipesPreview = getRandomRecipesPreview;
-
-
-//שורה 146 - מתכונים שנצפו
+// מתכונים שנצפו
 async function markRecipeAsViewed(user_id, recipe_id) {
-  await DButils.execQuery(
-    `INSERT INTO viewed_recipes (user_id, recipe_id) VALUES ('${user_id}', '${recipe_id}')`
-  );
+  await DButils.execQuery(`
+    INSERT INTO viewed_recipes (user_id, recipe_id, viewed_at)
+    VALUES ('${user_id}', '${recipe_id}', CURRENT_TIMESTAMP)
+  `);
 }
 exports.markRecipeAsViewed = markRecipeAsViewed;
 
 
-//יצירת מתכון חדש
+// יצירת מתכון חדש
 async function createNewRecipe(user_id, recipeData) {
   const {
     image,
     title,
     prep_time_minutes,
-    
     tags,
     has_gluten,
     ingredients,
@@ -240,7 +211,7 @@ async function createNewRecipe(user_id, recipeData) {
 }
 exports.createNewRecipe = createNewRecipe;
 
-//3 מתכונים אקראיים
+//החזרת 3 מתכונים אקראיים
 async function get3RandomRecipesPreview(number) {
   const response = await axios.get(`${api_domain}/random`, {
     params: {
@@ -308,4 +279,3 @@ async function searchRecipesAdvanced({
   }
 }
 exports.searchRecipesAdvanced = searchRecipesAdvanced;
-

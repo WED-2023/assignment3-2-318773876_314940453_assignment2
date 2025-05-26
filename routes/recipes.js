@@ -4,16 +4,6 @@ const recipes_utils = require("./utils/recipes_utils");
 
 // router.get("/", (req, res) => res.send("im here"));
 
-// החלק הראשון של   /recipes - שורה 9
-router.get("/", async (req, res, next) => {
-  try {
-    const previews = await recipes_utils.getRandomRecipesPreview(5);
-    res.status(200).send({ recipes: previews });
-  } catch (error) {
-    next(error);
-  }
-});
-
 //החזרת 3 מתכונים רנדומליים
 router.get("/3random", async (req, res, next) => {
   try {
@@ -25,7 +15,7 @@ router.get("/3random", async (req, res, next) => {
 });
 
 
-//search (recipes)
+//חיפוש מתכון
 router.get("/search", async (req, res, next) => {
   try {
     const { query, cuisine, diet, intolerances, sortBy, number} = req.query;
@@ -75,48 +65,6 @@ router.post("/new", async (req, res, next) => {
     next(error);
   }
 });
-
-//  החזרת מתכונים רנדומליים עבור החלק הראשון - ?
-router.get("/random", async (req, res, next) => {
-  try {
-    const randomRecipes = await recipes_utils.getRandomRecipesPreview(5);
-    res.status(200).send({ recipes: randomRecipes });
-  } catch (error) {
-    next(error);
-  }
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
