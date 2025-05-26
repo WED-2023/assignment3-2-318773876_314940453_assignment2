@@ -31,28 +31,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/inline_response_200_1'
-  /home:
-    get:
-      tags:
-      - Navigation
-      summary: Get main recipes page
-      description: Returns the main recipe overview page
-      responses:
-        "200":
-          description: Main recipe page
-  /about:
-    get:
-      tags:
-      - Navigation
-      summary: About the project
-      description: Returns information about the project and the team
-      responses:
-        "200":
-          description: About page content
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_2'
   /login:
     post:
       tags:

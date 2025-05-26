@@ -43,8 +43,11 @@ router.get('/favorites', async (req,res,next) => {
     const user_id = req.session.user_id;
     const recipes_id = await user_utils.getFavoriteRecipes(user_id);
     let recipes_id_array = [];
-    recipes_id.map((element) => recipes_id_array.push(element.recipe_id));
-    const results = await recipe_utils.getRecipesPreview(recipes_id_array, user_id);
+
+    //recipes_id.map((element) => recipes_id_array.push(element.recipe_id));
+    //const results = await recipe_utils.getRecipesPreview(recipes_id_array, user_id);
+    
+    const results = await recipe_utils.getRecipesPreview(recipes_id, user_id);
     res.status(200).send(results);
   } catch(error){
     next(error); 
@@ -79,8 +82,10 @@ router.get("/recent", async (req, res, next) => {
     const user_id = req.session.user_id;
     const recent = await user_utils.getLastViewedRecipes(user_id);
 
-    const recipeIds = recent.map(r => r.recipe_id);
-    const recipes = await recipe_utils.getRecipesPreview(recipeIds, user_id);
+    //const recipeIds = recent.map(r => r.recipe_id);
+    //const recipes = await recipe_utils.getRecipesPreview(recipeIds, user_id);
+
+    const recipes = await recipe_utils.getRecipesPreview(recent, user_id);
 
     res.status(200).send({ recipes });
   } catch (err) {

@@ -55,10 +55,10 @@ function extractPreview(recipe_info) {
 exports.extractPreview = extractPreview;
 
 //פונקציית עזר לפונקציה favorites  שנמצאת בuser.js   
-async function getRecipesPreview(recipes_ids, user_id) {
+async function getRecipesPreview(recipe_entries, user_id) {
   try {
     const previews = await Promise.all(
-      recipes_ids.map(async (recipe_id) => {
+      recipe_entries.map(async ({ recipe_id, source }) => {
         let isViewed = false;
 
         // אם יש משתמש מחובר – נבדוק אם הוא צפה
@@ -70,7 +70,7 @@ async function getRecipesPreview(recipes_ids, user_id) {
           isViewed = result.length > 0;
         }
 
-        if (recipe_id < 100) {
+        if (source === "internal") {
           // פנימי
           const result = await DButils.execQuery(`SELECT * FROM recipes WHERE recipe_id = ${recipe_id}`);
           if (!result || result.length === 0) {
@@ -157,8 +157,8 @@ exports.getRecipeDetails = getRecipeDetails;
 // מתכונים שנצפו
 async function markRecipeAsViewed(user_id, recipe_id) {
   await DButils.execQuery(`
-    INSERT INTO viewed_recipes (user_id, recipe_id, viewed_at)
-    VALUES ('${user_id}', '${recipe_id}', CURRENT_TIMESTAMP)
+    INSERT INTO viewed_recipes (user_id, recipe_id, viewed_at, source)
+    VALUES ('${user_id}', '${recipe_id}', CURRENT_TIMESTAMP, 'external')
   `);
 }
 exports.markRecipeAsViewed = markRecipeAsViewed;

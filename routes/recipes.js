@@ -1,8 +1,39 @@
 var express = require("express");
 var router = express.Router();
 const recipes_utils = require("./utils/recipes_utils");
+const axios = require("axios");
+const api_domain = "https://api.spoonacular.com/recipes";
+const api_key = process.env.spoonacular_apiKey;
 
 // router.get("/", (req, res) => res.send("im here"));
+
+//הצגת המתכונים באתר
+router.get("/", async (req, res, next) => {
+  try {
+    const user_id = req.session?.user_id;
+    // כל המתכונים מהDB
+    const internalRecipes = await DButils.execQuery("SELECT recipe_id, 'internal' as source FROM recipes");
+    // מתכונים חיצוניים אקראיים
+    const externalRaw = await axios.get(`${api_domain}/random`, {
+      params: {
+        number: 10,
+        apiKey: api_key,
+      },
+    });
+    const externalRecipes = externalRaw.data.recipes.map((recipe) => ({
+      recipe_id: recipe.id,
+      source: 'external',
+    }));
+    // מיזוג כל המתכונים לרשימה אחת
+    const allRecipes = [...internalRecipes, ...externalRecipes];
+    // שימוש בפונקציה כדי להחזיר פרטים מקדימים
+    const previews = await recipes_utils.getRecipesPreview(allRecipes, user_id);
+    res.status(200).send(previews);
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 //החזרת 3 מתכונים רנדומליים
 router.get("/3random", async (req, res, next) => {
