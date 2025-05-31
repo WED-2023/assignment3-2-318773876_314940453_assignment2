@@ -112,4 +112,24 @@ router.get("/recipes", async (req, res, next) => {
 });
 
 
+//החזרת מתכונים משפחתיים של משתמש מחובר
+router.get("/family", async (req, res, next) => {
+  try {
+    const user_id = req.session.user_id;
+
+    const result = await DButils.execQuery(`
+      SELECT recipe_id, recipe_name, when_prepared, ingredients, preparation_method, image_url
+      FROM family_recipes
+      WHERE user_id = '${user_id}'
+      LIMIT 3
+    `);
+
+    res.status(200).send({ recipes: result });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
 module.exports = router;

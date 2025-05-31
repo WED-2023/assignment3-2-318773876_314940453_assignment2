@@ -437,10 +437,22 @@ components:
       type: object
       properties:
         recipes:
-          minItems: 3
           type: array
           items:
-            $ref: '#/components/schemas/FamilyRecipe'
+            type: object
+            properties:
+              recipe_id:
+                type: integer
+              recipe_name:
+                type: string
+              when_prepared:
+                type: string
+              ingredients:
+                type: string
+              preparation_method:
+                type: string
+              image_url:
+                type: string
     RecipeDetails_ingredients:
       type: object
       properties:
