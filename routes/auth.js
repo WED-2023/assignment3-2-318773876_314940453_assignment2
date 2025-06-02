@@ -4,6 +4,10 @@ const MySql = require("../routes/utils/MySql");
 const DButils = require("../routes/utils/DButils");
 const bcrypt = require("bcrypt");
 
+/**
+ * This path registers a new user
+ * Validates input, checks for existing username, hashes password, and inserts user into the database
+ */
 router.post("/register", async (req, res, next) => {
   try {
     // parameters exists
@@ -45,6 +49,11 @@ router.post("/register", async (req, res, next) => {
   }
 });
 
+
+/**
+ * This path logs in a user
+ * Verifies username and password and starts a session
+ */
 router.post("/login", async (req, res, next) => {
   try {
     // check that username exists
@@ -74,6 +83,11 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
+
+/**
+ * This path logs out the current user
+ * Resets session and clears cookie
+ */
 router.post("/logout", function (req, res) {
   console.log("session user_id Logout: " + req.session.user_id);
   req.session.reset(); // reset the session info --> send cookie when  req.session == undefined!!

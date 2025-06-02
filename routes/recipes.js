@@ -7,13 +7,15 @@ const api_key = process.env.spoonacular_apiKey;
 
 // router.get("/", (req, res) => res.send("im here"));
 
-//הצגת המתכונים באתר
+/**
+ * This path returns all recipes (internal and random external) for main display
+ */
 router.get("/", async (req, res, next) => {
   try {
     const user_id = req.session?.user_id;
-    // כל המתכונים מהDB
+    // Fetch internal recipes from the database
     const internalRecipes = await DButils.execQuery("SELECT recipe_id, 'internal' as source FROM recipes");
-    // מתכונים חיצוניים אקראיים
+    // Fetch 10 random recipes from external API
     const externalRaw = await axios.get(`${api_domain}/random`, {
       params: {
         number: 10,
@@ -24,9 +26,9 @@ router.get("/", async (req, res, next) => {
       recipe_id: recipe.id,
       source: 'external',
     }));
-    // מיזוג כל המתכונים לרשימה אחת
+    // Merge all recipes into a single list
     const allRecipes = [...internalRecipes, ...externalRecipes];
-    // שימוש בפונקציה כדי להחזיר פרטים מקדימים
+    // Generate previews for all recipes
     const previews = await recipes_utils.getRecipesPreview(allRecipes, user_id);
     res.status(200).send(previews);
   } catch (error) {
@@ -35,7 +37,9 @@ router.get("/", async (req, res, next) => {
 });
 
 
-//החזרת 3 מתכונים רנדומליים
+/**
+ * This path returns 3 random external recipes for "Explore" section
+ */
 router.get("/3random", async (req, res, next) => {
   try {
     const randomRecipes = await recipes_utils.get3RandomRecipesPreview(3);
@@ -46,7 +50,9 @@ router.get("/3random", async (req, res, next) => {
 });
 
 
-//חיפוש מתכון
+/**
+ * This path performs advanced recipe search using filters and query
+ */
 router.get("/search", async (req, res, next) => {
   try {
     const { query, cuisine, diet, intolerances, sortBy, number} = req.query;
@@ -75,7 +81,9 @@ router.get("/search", async (req, res, next) => {
 });
 
 
-//יצירת מתכון חדש
+/**
+ * This path allows the logged-in user to create a new internal recipe
+ */
 const DButils = require("./utils/DButils");
 
 router.post("/new", async (req, res, next) => {
@@ -99,134 +107,14 @@ router.post("/new", async (req, res, next) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
- * This path returns a full details of a recipe by its id
+ * This path returns full details of a recipe by its ID
+ * Also marks the recipe as "viewed" for the logged-in user
  */
 router.get("/:recipeId", async (req, res, next) => {
   try {
     const recipe = await recipes_utils.getRecipeDetails(req.params.recipeId);
     
-    // הוספת צפייה למשתמש המחובר, אם יש
     if (req.session && req.session.user_id) {
       await recipes_utils.markRecipeAsViewed(req.session.user_id, req.params.recipeId);
     }

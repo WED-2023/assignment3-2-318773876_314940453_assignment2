@@ -299,9 +299,6 @@ components:
         prep_time_minutes:
           type: integer
           example: 30
-        popularity_score:
-          type: integer
-          example: 200
         tags:
           type: string
           example: צמחוני

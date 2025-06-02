@@ -1,5 +1,10 @@
 const DButils = require("./DButils");
 
+
+/**
+ * Mark a recipe as favorite for the logged-in user
+ * Determines if the recipe is from internal or external source and inserts into my_favorites table
+ */
 async function markAsFavorite(user_id, recipe_id){
     let source = 'external';
 
@@ -7,8 +12,6 @@ async function markAsFavorite(user_id, recipe_id){
     if (result.length > 0) {
       source = 'internal';
     }
-
-    //await DButils.execQuery(`insert into my_favorites values ('${user_id}',${recipe_id})`);
 
     await DButils.execQuery(`
     INSERT INTO my_favorites (user_id, recipe_id, source)
@@ -18,12 +21,10 @@ async function markAsFavorite(user_id, recipe_id){
 }
 exports.markAsFavorite = markAsFavorite;
 
-// async function getFavoriteRecipes(user_id){
-//     const recipes_id = await DButils.execQuery(`select recipe_id from my_favorites where user_id='${user_id}'`);
-//     return recipes_id;
-// }
-// exports.getFavoriteRecipes = getFavoriteRecipes;
 
+/**
+ * Get list of recipe IDs and sources marked as favorite by the user
+ */
 async function getFavoriteRecipes(user_id) {
   const recipes = await DButils.execQuery(`
     SELECT recipe_id, source
@@ -34,6 +35,10 @@ async function getFavoriteRecipes(user_id) {
 }
 exports.getFavoriteRecipes = getFavoriteRecipes;
 
+
+/**
+ * Get the last 3 viewed recipes by the user, ordered by most recent view
+ */
 async function getLastViewedRecipes(user_id) {
   const result = await DButils.execQuery(`
     SELECT vr.recipe_id, vr.source
@@ -53,18 +58,19 @@ async function getLastViewedRecipes(user_id) {
 exports.getLastViewedRecipes = getLastViewedRecipes;
 
 
-// החזרת מתכונים של משתמש מסוים (המשתמש שמחובר)
+/**
+ * Get all internal recipes created by the logged-in user
+ * Returns a list of preview format objects
+ */
 async function getUserRecipes(user_id) {
   const recipes = await DButils.execQuery(
     `SELECT * FROM recipes WHERE user_id = '${user_id}'`
   );
-  // אם רוצים להחזיר בפורמט של Preview כמו בשאר המערכת:
   return recipes.map((recipe) => {
     return {
       title: recipe.title,
       image: recipe.image,
       prep_time_minutes: recipe.prep_time_minutes,
-      popularity_score: recipe.popularity_score,
       tags: recipe.tags,
       has_gluten: recipe.has_gluten === 1,
       was_viewed: recipe.was_viewed === 1,

@@ -11,7 +11,9 @@ require("dotenv").config();
  */
 
 
-// שליפת מידע מלא על מתכון לפי מזהה
+/**
+ * Get full recipe details from Spoonacular by recipe ID
+ */
 async function getRecipeInformation(recipe_id) {
     return await axios.get(`${api_domain}/${recipe_id}/information`, {
         params: {
@@ -22,7 +24,9 @@ async function getRecipeInformation(recipe_id) {
 }
 
 
-// תצוגה מקדימה - מיפוי מתוך מידע מלא
+/**
+ * Extract a preview object from full recipe data
+ */
 function extractPreview(recipe_info) {
   const {
     id,
@@ -44,7 +48,6 @@ function extractPreview(recipe_info) {
     title,
     prep_time_minutes: readyInMinutes,
     image,
-    popularity_score: aggregateLikes,
     tags,
     has_gluten: !glutenFree,
     was_viewed: false,
@@ -54,14 +57,18 @@ function extractPreview(recipe_info) {
 }
 exports.extractPreview = extractPreview;
 
-//פונקציית עזר לפונקציה favorites  שנמצאת בuser.js   
+
+/**
+ * Get preview objects for multiple recipes (internal + external), including view status
+ * help function for the favorites function in user.js
+*/   
 async function getRecipesPreview(recipe_entries, user_id) {
   try {
     const previews = await Promise.all(
       recipe_entries.map(async ({ recipe_id, source }) => {
         let isViewed = false;
 
-        // אם יש משתמש מחובר – נבדוק אם הוא צפה
+        //if there is a logged-in user, check if they have viewed the recipe
         if (user_id) {
           const result = await DButils.execQuery(`
             SELECT * FROM viewed_recipes
@@ -71,7 +78,7 @@ async function getRecipesPreview(recipe_entries, user_id) {
         }
 
         if (source === "internal") {
-          // פנימי
+          // internal
           const result = await DButils.execQuery(`SELECT * FROM recipes WHERE recipe_id = ${recipe_id}`);
           if (!result || result.length === 0) {
             throw new Error("Recipe not found in internal DB");
@@ -82,7 +89,6 @@ async function getRecipesPreview(recipe_entries, user_id) {
             title: recipe.title,
             prep_time_minutes: recipe.prep_time_minutes,
             image: recipe.image,
-            popularity_score: recipe.popularity_score,
             tags: recipe.tags,
             has_gluten: recipe.has_gluten === 1,
             was_viewed: isViewed,
@@ -90,7 +96,7 @@ async function getRecipesPreview(recipe_entries, user_id) {
             can_preview: recipe.can_preview === 1,
           };
         } else {
-          // חיצוני
+          // external
           const response = await axios.get(`${api_domain}/${recipe_id}/information`, {
             params: {
               includeNutrition: false,
@@ -112,7 +118,9 @@ async function getRecipesPreview(recipe_entries, user_id) {
 exports.getRecipesPreview = getRecipesPreview;
 
 
-// שליפה של כל פרטי המתכון לפי מזהה
+/**
+ * Get full recipe details (including ingredients & instructions)
+ */
 async function getRecipeDetails(recipe_id) {
   let recipe_info = await getRecipeInformation(recipe_id);
   recipe_info = recipe_info.data;
@@ -137,7 +145,6 @@ async function getRecipeDetails(recipe_id) {
     title,
     prep_time_minutes: readyInMinutes,
     image,
-    popularity_score: aggregateLikes,
     tags,
     has_gluten: !glutenFree,
     ingredients: extendedIngredients.map(ing => ({
@@ -154,7 +161,9 @@ async function getRecipeDetails(recipe_id) {
 exports.getRecipeDetails = getRecipeDetails;
 
 
-// מתכונים שנצפו
+/**
+ * Mark a recipe as viewed by a user
+ */
 async function markRecipeAsViewed(user_id, recipe_id) {
   await DButils.execQuery(`
     INSERT INTO viewed_recipes (user_id, recipe_id, viewed_at, source)
@@ -164,7 +173,9 @@ async function markRecipeAsViewed(user_id, recipe_id) {
 exports.markRecipeAsViewed = markRecipeAsViewed;
 
 
-// יצירת מתכון חדש
+/**
+ * Create a new internal recipe in the system
+ */
 async function createNewRecipe(user_id, recipeData) {
   const {
     image,
@@ -176,21 +187,21 @@ async function createNewRecipe(user_id, recipeData) {
     instructions,
     servings
   } = recipeData;
-  // בדיקה בסיסית
+  // basic validation
   if (!title || !ingredients || !instructions) {
     const error = new Error("Missing required fields");
     error.status = 400;
     throw error;
   }
-  // המרת ערכים בוליאניים ל־0/1
+  // has_gluten: true/false -> 1/0
   const hasGlutenValue = has_gluten ? 1 : 0;
   const wasViewedValue = 0;
   const isFavoriteValue = 0;
   const canPreviewValue = 1;
-  // הכנסת נתונים למסד
+  // insert the new recipe into the database
   await DButils.execQuery(`
     INSERT INTO recipes (
-      user_id, image, title, prep_time_minutes, popularity_score,
+      user_id, image, title, prep_time_minutes,
       tags, has_gluten, was_viewed, is_favorite, can_preview, ingredients, instructions, servings
     ) VALUES (
       '${user_id}', '${image}', '${title}', '${prep_time_minutes}', 0,
@@ -201,7 +212,6 @@ async function createNewRecipe(user_id, recipeData) {
     title,
     image,
     prep_time_minutes,
-    popularity_score,
     tags,
     has_gluten: hasGlutenValue,
     ingredients,
@@ -211,7 +221,9 @@ async function createNewRecipe(user_id, recipeData) {
 }
 exports.createNewRecipe = createNewRecipe;
 
-//החזרת 3 מתכונים אקראיים
+/**
+ * Get 3 random recipes from Spoonacular API in preview format
+ */
 async function get3RandomRecipesPreview(number) {
   const response = await axios.get(`${api_domain}/random`, {
     params: {
@@ -224,7 +236,6 @@ async function get3RandomRecipesPreview(number) {
       image: recipe.image,
       title: recipe.title,
       prep_time_minutes: recipe.readyInMinutes,
-      popularity_score: recipe.aggregateLikes,
       tags: recipe.vegetarian ? "צמחוני" : "טבעוני",
       has_gluten: recipe.glutenFree === false,
       was_viewed: false,
@@ -235,7 +246,9 @@ async function get3RandomRecipesPreview(number) {
 }
 exports.get3RandomRecipesPreview = get3RandomRecipesPreview;
 
-// חיפוש מתכונים לפי שאילתא
+/**
+ * Perform an advanced recipe search using Spoonacular
+ */
 async function searchRecipesAdvanced({
   query,
   cuisine,
@@ -264,7 +277,6 @@ async function searchRecipesAdvanced({
         title: recipe.title,
         image: recipe.image,
         prep_time_minutes: recipe.readyInMinutes,
-        popularity_score: recipe.aggregateLikes,
         tags: recipe.vegetarian ? "צמחוני" : recipe.vegan ? "טבעוני" : null,
         has_gluten: recipe.glutenFree === false,
         was_viewed: false,

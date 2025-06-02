@@ -76,14 +76,13 @@ router.get("/status", async (req, res) => {
 });
 
 
-// החזרת מתכונים שנצפו לאחרונה
+/**
+ * This path returns the last 3 recipes viewed by the logged-in user
+ */
 router.get("/recent", async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
     const recent = await user_utils.getLastViewedRecipes(user_id);
-
-    //const recipeIds = recent.map(r => r.recipe_id);
-    //const recipes = await recipe_utils.getRecipesPreview(recipeIds, user_id);
 
     const recipes = await recipe_utils.getRecipesPreview(recent, user_id);
 
@@ -94,7 +93,9 @@ router.get("/recent", async (req, res, next) => {
 });
 
 
-// החזרת מתכונים של משתמש מחובר
+/**
+ * This path returns the recipes created by the logged-in user
+ */
 router.get("/recipes", async (req, res, next) => {
   try {
     const user_id = req.session?.user_id;
@@ -112,7 +113,9 @@ router.get("/recipes", async (req, res, next) => {
 });
 
 
-//החזרת מתכונים משפחתיים של משתמש מחובר
+/**
+ * This path returns 3 family recipes associated with the logged-in user
+ */
 router.get("/family", async (req, res, next) => {
   try {
     const user_id = req.session.user_id;
