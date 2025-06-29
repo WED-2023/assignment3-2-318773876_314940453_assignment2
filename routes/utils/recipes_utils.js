@@ -86,6 +86,7 @@ async function getRecipesPreview(recipe_entries, user_id) {
           const recipe = result[0];
           return {
             id: recipe.recipe_id,
+            source: 'internal',
             title: recipe.title,
             prep_time_minutes: recipe.prep_time_minutes,
             image: recipe.image,
@@ -105,6 +106,7 @@ async function getRecipesPreview(recipe_entries, user_id) {
           });
           const preview = extractPreview(response.data);
           preview.was_viewed = isViewed;
+          preview.source = 'external';
           return preview;
         }
       })
@@ -121,42 +123,78 @@ exports.getRecipesPreview = getRecipesPreview;
 /**
  * Get full recipe details (including ingredients & instructions)
  */
-async function getRecipeDetails(recipe_id) {
-  let recipe_info = await getRecipeInformation(recipe_id);
-  recipe_info = recipe_info.data;
-  const {
-    id,
-    title,
-    readyInMinutes,
-    image,
-    aggregateLikes,
-    vegan,
-    vegetarian,
-    glutenFree,
-    extendedIngredients,
-    instructions,
-    servings
-  } = recipe_info;
-  let tags = null;
-  if (vegan) tags = "טבעוני";
-  else if (vegetarian) tags = "צמחוני";
-  return {
-    id,
-    title,
-    prep_time_minutes: readyInMinutes,
-    image,
-    tags,
-    has_gluten: !glutenFree,
-    ingredients: extendedIngredients.map(ing => ({
-      name: ing.name,
-      amount: ing.original
-    })),
-    instructions,
-    servings,
-    was_viewed: false,
-    is_favorite: false,
-    can_preview: true
-  };
+async function getRecipeDetails(recipe_id, user_id = null, source = null) {
+  let is_viewed = false;
+  let is_favorite = false;
+
+  // אם המשתמש מחובר - בדיקה אם צפה ואם הוסיף למועדפים
+  if (user_id) {
+    const viewed = await DButils.execQuery(`
+      SELECT * FROM viewed_recipes
+      WHERE user_id = '${user_id}' AND recipe_id = '${recipe_id}'
+    `);
+    is_viewed = viewed.length > 0;
+
+    const favorite = await DButils.execQuery(`
+      SELECT * FROM my_favorites
+      WHERE user_id = '${user_id}' AND recipe_id = '${recipe_id}'
+    `);
+    is_favorite = favorite.length > 0;
+  }
+
+  if (source === "internal") {
+    // מתכון פנימי
+    const internal = await DButils.execQuery(`
+      SELECT * FROM recipes WHERE recipe_id = '${recipe_id}'
+    `);
+
+    if (internal.length === 0) {
+      throw new Error("Internal recipe not found");
+    }
+
+    const recipe = internal[0];
+
+    return {
+      id: recipe.recipe_id,
+      title: recipe.title,
+      prep_time_minutes: recipe.prep_time_minutes,
+      image: recipe.image,
+      tags: recipe.tags,
+      has_gluten: recipe.has_gluten === 1,
+      ingredients: JSON.parse(recipe.ingredients),
+      instructions: recipe.instructions,
+      servings: recipe.servings,
+      was_viewed: is_viewed,
+      is_favorite: is_favorite,
+      can_preview: recipe.can_preview === 1
+    };
+  } else {
+    // מתכון חיצוני
+    const response = await getRecipeInformation(recipe_id);
+    const data = response.data;
+
+    let tags = null;
+    if (data.vegan) tags = "טבעוני";
+    else if (data.vegetarian) tags = "צמחוני";
+
+    return {
+      id: data.id,
+      title: data.title,
+      prep_time_minutes: data.readyInMinutes,
+      image: data.image,
+      tags,
+      has_gluten: !data.glutenFree,
+      ingredients: data.extendedIngredients.map(ing => ({
+        name: ing.name,
+        amount: ing.original
+      })),
+      instructions: data.instructions,
+      servings: data.servings,
+      was_viewed: is_viewed,
+      is_favorite: is_favorite,
+      can_preview: true
+    };
+  }
 }
 exports.getRecipeDetails = getRecipeDetails;
 
@@ -233,6 +271,8 @@ async function get3RandomRecipesPreview(number) {
   });
   return response.data.recipes.map((recipe) => {
     return {
+      id: recipe.id,
+      source: 'external',   
       image: recipe.image,
       title: recipe.title,
       prep_time_minutes: recipe.readyInMinutes,

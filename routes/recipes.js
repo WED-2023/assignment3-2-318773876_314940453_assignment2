@@ -113,10 +113,14 @@ router.post("/new", async (req, res, next) => {
  */
 router.get("/:recipeId", async (req, res, next) => {
   try {
-    const recipe = await recipes_utils.getRecipeDetails(req.params.recipeId);
-    
-    if (req.session && req.session.user_id) {
-      await recipes_utils.markRecipeAsViewed(req.session.user_id, req.params.recipeId);
+    const user_id = req.session?.user_id || null;
+    const recipe_id = req.params.recipeId;
+    const source = req.query.source || null;
+
+    const recipe = await recipes_utils.getRecipeDetails(recipe_id, user_id, source);
+
+    if (user_id) {
+      await recipes_utils.markRecipeAsViewed(user_id, recipe_id, source);
     }
     
     res.send(recipe);

@@ -81,7 +81,7 @@ router.get("/status", async (req, res) => {
  */
 router.get("/recent", async (req, res, next) => {
   try {
-    const user_id = req.session.user_id;
+    const user_id = req.user_id;
     const recent = await user_utils.getLastViewedRecipes(user_id);
 
     const recipes = await recipe_utils.getRecipesPreview(recent, user_id);
