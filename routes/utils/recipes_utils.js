@@ -67,14 +67,21 @@ async function getRecipesPreview(recipe_entries, user_id) {
     const previews = await Promise.all(
       recipe_entries.map(async ({ recipe_id, source }) => {
         let isViewed = false;
+        let isFavorite = false;
 
         //if there is a logged-in user, check if they have viewed the recipe
         if (user_id) {
-          const result = await DButils.execQuery(`
+          const viewedResult = await DButils.execQuery(`
             SELECT * FROM viewed_recipes
             WHERE user_id = '${user_id}' AND recipe_id = '${recipe_id}'
           `);
-          isViewed = result.length > 0;
+          isViewed = viewedResult.length > 0;
+
+          const favoriteResult = await DButils.execQuery(`
+            SELECT * FROM my_favorites
+            WHERE user_id = '${user_id}' AND recipe_id = '${recipe_id}'
+          `);
+          isFavorite = favoriteResult.length > 0;
         }
 
         if (source === "internal") {
@@ -93,7 +100,7 @@ async function getRecipesPreview(recipe_entries, user_id) {
             tags: recipe.tags,
             has_gluten: recipe.has_gluten === 1,
             was_viewed: isViewed,
-            is_favorite: recipe.is_favorite === 1,
+            is_favorite: isFavorite,
             can_preview: recipe.can_preview === 1,
           };
         } else {
@@ -106,6 +113,7 @@ async function getRecipesPreview(recipe_entries, user_id) {
           });
           const preview = extractPreview(response.data);
           preview.was_viewed = isViewed;
+          preview.is_favorite = isFavorite;
           preview.source = 'external';
           return preview;
         }
