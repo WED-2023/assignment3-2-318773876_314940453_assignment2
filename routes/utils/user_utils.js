@@ -68,6 +68,8 @@ async function getUserRecipes(user_id) {
   );
   return recipes.map((recipe) => {
     return {
+      id: recipe.recipe_id,
+      source: 'internal',
       title: recipe.title,
       image: recipe.image,
       prep_time_minutes: recipe.prep_time_minutes,

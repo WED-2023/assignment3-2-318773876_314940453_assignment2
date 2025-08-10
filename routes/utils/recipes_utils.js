@@ -244,22 +244,35 @@ async function createNewRecipe(user_id, recipeData) {
   const wasViewedValue = 0;
   const isFavoriteValue = 0;
   const canPreviewValue = 1;
+
+  const esc = (s) => String(s ?? "").replace(/'/g, "''");
+
   // insert the new recipe into the database
   await DButils.execQuery(`
     INSERT INTO recipes (
       user_id, image, title, prep_time_minutes,
       tags, has_gluten, was_viewed, is_favorite, can_preview, ingredients, instructions, servings
     ) VALUES (
-      '${user_id}', '${image}', '${title}', '${prep_time_minutes}', 0,
-      '${tags}', '${hasGlutenValue}',  '${wasViewedValue}', '${isFavoriteValue}', '${canPreviewValue}','${JSON.stringify(ingredients)}', '${instructions}', '${servings}'
+      '${user_id}',
+      '${esc(image)}',
+      '${esc(title)}',
+      ${Number.isFinite(+prep_time_minutes) ? +prep_time_minutes : 0},
+      ${tags ? `'${esc(tags)}'` : 'NULL'}, 
+      ${hasGlutenValue},  
+      ${wasViewedValue}, 
+      ${isFavoriteValue}, 
+      ${canPreviewValue}, 
+      '${esc(JSON.stringify(ingredients))}',
+      '${esc(instructions)}', 
+      ${Number.isFinite(+servings) ? +servings : 0}
     )
   `);
   return {
     title,
     image,
     prep_time_minutes,
-    tags,
-    has_gluten: hasGlutenValue,
+    tags: tags ?? null,
+    has_gluten: !!has_gluten,
     ingredients,
     instructions,
     servings
