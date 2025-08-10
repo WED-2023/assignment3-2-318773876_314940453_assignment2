@@ -210,14 +210,30 @@ exports.getRecipeDetails = getRecipeDetails;
 /**
  * Mark a recipe as viewed by a user
  */
-async function markRecipeAsViewed(user_id, recipe_id) {
+// async function markRecipeAsViewed(user_id, recipe_id) {
+//   await DButils.execQuery(`
+//     INSERT INTO viewed_recipes (user_id, recipe_id, viewed_at, source)
+//     VALUES ('${user_id}', '${recipe_id}', CURRENT_TIMESTAMP, 'external')
+//   `);
+// }
+// exports.markRecipeAsViewed = markRecipeAsViewed;
+
+async function markRecipeAsViewed(user_id, recipe_id, source = null) {
+  // אם לא קיבלתי source (או undefined) – נזהה לפי קיום בטבלת recipes
+  let finalSource = source;
+  if (!finalSource) {
+    const internal = await DButils.execQuery(
+      `SELECT 1 FROM recipes WHERE recipe_id = ${Number(recipe_id)} LIMIT 1`
+    );
+    finalSource = internal.length ? 'internal' : 'external';
+  }
+
   await DButils.execQuery(`
     INSERT INTO viewed_recipes (user_id, recipe_id, viewed_at, source)
-    VALUES ('${user_id}', '${recipe_id}', CURRENT_TIMESTAMP, 'external')
+    VALUES ('${user_id}', '${recipe_id}', CURRENT_TIMESTAMP, '${finalSource}')
   `);
 }
 exports.markRecipeAsViewed = markRecipeAsViewed;
-
 
 /**
  * Create a new internal recipe in the system

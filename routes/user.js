@@ -96,17 +96,38 @@ router.get("/recent", async (req, res, next) => {
 /**
  * This path returns the recipes created by the logged-in user
  */
+// router.get("/recipes", async (req, res, next) => {
+//   try {
+//     const user_id = req.session?.user_id;
+
+//     if (!user_id) {
+//       return res.status(401).send({ message: "Unauthorized – login required" });
+//     }
+
+//     const userRecipes = await user_utils.getUserRecipes(user_id);
+
+//     res.status(200).send({ recipes: userRecipes });
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
 router.get("/recipes", async (req, res, next) => {
   try {
     const user_id = req.session?.user_id;
+    if (!user_id) return res.status(401).send({ message: "Unauthorized – login required" });
 
-    if (!user_id) {
-      return res.status(401).send({ message: "Unauthorized – login required" });
-    }
+    // ניקח את ה־IDs של המתכונים שלי ונציין שמקורם פנימי
+    const entries = await DButils.execQuery(`
+      SELECT recipe_id, 'internal' AS source
+      FROM recipes
+      WHERE user_id = '${user_id}'
+      ORDER BY recipe_id DESC
+    `);
 
-    const userRecipes = await user_utils.getUserRecipes(user_id);
-
-    res.status(200).send({ recipes: userRecipes });
+    // נבנה previews עקביים (כולל viewed/favorite לפי טבלאות למשתמש)
+    const previews = await recipe_utils.getRecipesPreview(entries, user_id);
+    res.status(200).send({ recipes: previews });
   } catch (error) {
     next(error);
   }
