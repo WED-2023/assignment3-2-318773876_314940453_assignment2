@@ -142,7 +142,7 @@ router.get("/family", async (req, res, next) => {
     const user_id = req.session.user_id;
 
     const result = await DButils.execQuery(`
-      SELECT recipe_id, recipe_name, when_prepared, ingredients, preparation_method, image_url
+      SELECT recipe_id, recipe_name, when_prepared, ingredients, preparation_method, image_url, owner
       FROM family_recipes
       WHERE user_id = '${user_id}'
       LIMIT 3
